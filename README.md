@@ -21,4 +21,4 @@ Therefore, when opting to automate your purchases by clicking "Invest" on the ho
 
 For optimization, sit back, deposit cash biweekly, and let Robinsquad handle everything...
 
-*Disclaimer: I'm an amateur investor. You can get rich...or broke. I take no responsibility because it's the computer's fault" 
+*Disclaimer: I'm an amateur investor. You can become rich...or broke. I take no responsibility because it's the computer's fault* 
