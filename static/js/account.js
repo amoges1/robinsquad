@@ -1,14 +1,12 @@
 class Positions extends React.Component {
-    constructor() {
-        super();
-        this.state = {
-            account: null
-        }
+    
+    state = {
+        account: null
     }
 
     componentDidMount() {
         fetch("http://127.0.0.1:5000/account")
-        .then(res => res.json())
+        .then(res => res.json()) //parse as json 1st level
         .then(data => this.setState({account: data }))
                 
     }
@@ -23,10 +21,10 @@ class Positions extends React.Component {
             )
         } else {
             let stocks = [];
+            
             this.state.account.positions.forEach( (stock, index) => {
-                // convert Str Python dict object into JSON Object
+                // convert String text 'dict' into JSON Object, 2nd level
                 let stockObj = JSON.parse(stock)
-                console.log(stockObj.name);
                 stocks.push(<li className="list-group-item bg-dark rounded" key={index}>
                             <div>
                                 <h6 className="text-center text-white border-white"> { stockObj.name }</h6>
@@ -42,14 +40,14 @@ class Positions extends React.Component {
 
             return( 
                 <div>
-                    <ul className="list-line text-center">
+                    <ul className="list-line text-center pt-3">
                         <li className="list-group-item bg-dark rounded">
                             <div>
                                 <h6 className="text-center text-white border-white"> Balance: </h6>
                             </div>
                             <div className="text-center">                                
                                 <h4><span className="badge badge-pill badge-success badge-positions"> 
-                                ${ Math.round(this.state.account.balance * 100)/100 } </span>
+                                ${ Math.round(this.state.account.equity * 100)/100 } </span>
                                 </h4>
                             </div>
                         </li>
@@ -59,7 +57,7 @@ class Positions extends React.Component {
                             </div>
                             <div className="text-center">                                
                                 <h4><span className="badge badge-pill badge-success badge-positions"> 
-                                ${ Math.round(this.state.account.cash * 100)/100 } </span>
+                                ${ Math.round(this.state.account.avail_cash * 100)/100 } </span>
                                 </h4>
                             </div>
                         </li>
@@ -68,12 +66,16 @@ class Positions extends React.Component {
                                 <h6 className="text-center text-white border-white"> Auto: </h6>
                             </div>
                             <div className="text-center">                                
-                                <h4> <a className="badge badge-pill badge-success badge-positions" href="/invest"> Invest</a>
+                                <h4> <a className="badge badge-pill badge-success badge-positions" 
+                                    href="/invest" data-toggle="tooltip" title="Click me to auto invest your money &#9889;"> Invest</a>
                                 </h4>
                             </div>
                         </li>
                     </ul>
-                    <ul className="list-line text-center">
+                    <section className="positions-title">
+                        <p className="display-4 text-center">Positions</p>
+                    </section>
+                    <ul className="list-line text-center pb-5">
                     {
                         stocks
                     } 
@@ -86,4 +88,4 @@ class Positions extends React.Component {
     }   
 }
 
-ReactDOM.render(<Positions />, document.getElementById("holdings"));
+ReactDOM.render(<Positions />, document.getElementById("positions"));
