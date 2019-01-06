@@ -11,131 +11,131 @@ class Stock:
         self.quantity = quantity
         self.total_value = value
         self.percentage = 0.0
+#
+# Retrieve a list of stock objects in relation to portfolio
+#
+def get_port_info(my_acc, instrs_quantity):
+    port_stocks, port_equity = [], 0
 
-# Retrieve stock objects of holdings by converting instr to sym, name, etc.
-def get_stock_info(my_account, instr_quantity):
-    holdings = []
-    total_quantity = 0.0
-    balance = 0.0
-    # print("Now loading", end="", flush=True)
-    for key, quantity in instr_quantity.items():
-        stock = my_account.instrument(key)
-        symbol = stock['symbol']
-        # print("...{}".format(symbol))
-        name = stock['simple_name']
-        total_value = float(quantity) * float(my_account.quote_data(symbol)['adjusted_previous_close'])
-        stock_obj = Stock(symbol, name, round(float(quantity)), round(total_value,2))
-        holdings.append(stock_obj)
-
-        balance += total_value
-        total_quantity += float(quantity)
+    for instr, quantity in instrs_quantity.items():
+        stock = my_acc.instrument(instr)
+        symbol, name = stock['symbol'], stock['simple_name']
+        # calculate stock's equity in dollars
+        stock_equity = float(quantity) * float(my_acc.quote_data(symbol)['adjusted_previous_close'])
+        stock_obj = Stock(symbol, name, int(float(quantity)), round(stock_equity,2))
+        
+        port_stocks.append(stock_obj)
+        port_equity += int(float(quantity))
     
-    for stock in holdings:
-        stock.percentage = round( (float(stock.quantity) / float(total_quantity)) , 4)
+    # calculate stock's percentage
+    for stock in port_stocks:
+        stock.percentage = round( (stock.quantity / port_equity) , 4)
 
-    return holdings, balance
-
-def get_user_info(email, password):
+    return port_stocks 
+#
+# Retrieve user account information e.g equity, stocks, etc. and upload to json
+#
+def get_acc_info(email, password):
     # log into Robinhood account
-    my_account = Robinhood()
-    
+    my_acc = Robinhood()
     try:
-        my_account.login(email,password)
+        my_acc.login(email,password)
     except:
         return False
 
-    # Gather stocks instruments and their symbols, names, quantities, total values
-    instruments = [ item['url'][45:-1] for item in my_account.positions()['results']]
-    quantity = [ item['quantity'] for item in my_account.positions()['results']]
+    # from assets, retrieve instrument ids
+    assets = [ asset for asset in my_acc.positions()['results']]
+    instr_ids = [ instr['instrument'].split("/")[-2] for instr in assets ]
+    quantity = [ asset['quantity'] for asset in my_acc.positions()['results']]
     
-    instr_quantity = dict(zip(instruments, quantity))
-    instr_quantity = {k: v for k, v in instr_quantity.items() if v != '0.0000'}
+    # key, value => instr_id, quantity
+    instrs_quantity = dict(zip(instr_ids, quantity))
+    # remove any sold assets, quantity = 0.0000
+    instrs_quantity = {k: v for k, v in instrs_quantity.items() if v != '0.0000'}
     
-    my_holdings, total_balance = get_stock_info(my_account, instr_quantity)
-    cash = float(my_account.portfolios()['withdrawable_amount']) + float(my_account.portfolios()['unwithdrawable_deposits'])
+    # generate portfolio information - stocks, equity, credentials
+    port_stocks = get_port_info(my_acc, instrs_quantity)
+    avail_cash = float(my_acc.portfolios()['withdrawable_amount']) + float(my_acc.portfolios()['unwithdrawable_deposits'])
     
+    # create port dict 
     portfolio = {}
-    portfolio.setdefault('positions', [])
+    portfolio['positions'] = []
     portfolio['email'] = email
     portfolio['password'] = password
-    portfolio['balance'] = round(total_balance, 2)
-    portfolio['cash'] = cash
+    portfolio['equity'] = round(float(my_acc.portfolios()['equity']),2)
+    portfolio['avail_cash'] = avail_cash
     
-    for stock in my_holdings:
-        # Serialize Stock Object
+    for stock in port_stocks:
+        # stock object must be serialized as json has limited type system
         portfolio['positions'].append(json.dumps(stock.__dict__))
 
-    # print(portfolio)
-    
-    # upload to acc.json         
+    # upload port to acc.json         
     with open("acc.json", "w") as f:
         json.dump(portfolio, f)
     
-    my_account.logout()
-
     return True
 
-# Retrieve priorities for VTI, VXUS, and VCIT
-def compare_ports(account):
-    pprint.pprint("Determine index stock to purchase...")
-    priority = dict()
+#
+# Retrieve priorities for VTI, VXUS, and VCIT purchases by comparing current portfolio
+#
+def compare_ports(positions):
+    pprint.pprint('Determine index stock to purchase...')
+    priority = {}
 
-    for stock in account["positions"]:
+    for stock in positions:
         # Convert Str object to Python dict
         stockObj = ast.literal_eval(stock)
-        if stockObj["symbol"] == "VTI" and stockObj["percentage"] < .35:
-            vti_diff = .35 - int(stockObj["percentage"])
+        if stockObj['symbol'] == 'VTI' and stockObj['percentage'] < .35:
+            vti_diff = .35 - stockObj['percentage']
             priority.update({'VTI':vti_diff})
-            # print("VTI is off by {} ".format(vti_diff))
-        elif stockObj["symbol"] == "VXUS" and stockObj["percentage"] < .35:
-            vxus_diff = .35 - stockObj["percentage"]
+
+        elif stockObj['symbol'] == 'VXUS' and stockObj['percentage'] < .35:
+            vxus_diff = .35 - stockObj['percentage']
             priority.update({'VXUS':vxus_diff})
-            # print("VXUS is off by {} ".format(vxus_diff))
-        elif stockObj["symbol"] == "VCIT" and stockObj["percentage"] < .10:
-            vcit_diff = .10 - stockObj["percentage"]
+
+        elif stockObj['symbol'] == 'VCIT' and stockObj['percentage'] < .10:
+            vcit_diff = .10 - stockObj['percentage']
             priority.update({'VCIT':vcit_diff})
-            # print("VCIT is off by {} ".format(vcit_diff))
-        else:
-            continue
         
-    # print("This is priority: ", priority)
-    # just return symbols
+    # return symbols by highest priority in desc order
     return sorted(priority, key=priority.get, reverse=True)
     
-
-def purchase_quantity(purchase_amt, ask_price):
-    quantity = 0
-    total = 0
-    while purchase_amt > total:
+#
+# Based on available cash, find max purchase amount with current asking price
+#
+def purchase_quantity(avail_cash, ask_price):
+    quantity, total_cost = 0, 0 
+    while avail_cash > total_cost:
         quantity = quantity + 1
-        total = quantity * ask_price
+        total_cost = quantity * ask_price
     return (quantity - 1)
 
-def rebalance(file="acc.json"):
-    # Read from JSON file
+#
+# Rebalance portfolio by purchasing VIT, VXUS and/or VCIT
+#
+def rebalance(file='acc.json'):
+    # read from json file
     with open(file) as f:
-        account = json.load(f)
+        acc = json.load(f)
    
-    # print("Let's see what to purchase...")
-    purchase_amt = account['cash']
-    priorities = compare_ports(account)
-    my_trader = Robinhood()
-    my_trader.login(account["email"], account["password"])
+    avail_cash = acc['avail_cash']
+    priorities = compare_ports(acc['positions'])
+    my_acc = Robinhood()
+    my_acc.login(acc['email'], acc['password'])
 
     purchases = []
+    # purchase as many stocks per priorities
     for stock in priorities:
-        ask_price = float(my_trader.quote_data(stock)['ask_price'])
-        if ask_price < purchase_amt:
-            quantity = purchase_quantity(purchase_amt, ask_price)
-            curr_bid = float(my_trader.quote_data(stock)['bid_price'])
-            stock_instrument = my_trader.instruments(stock)[0]
-            my_trader.place_buy_order(stock_instrument, quantity, curr_bid)
+        ask_price = float(my_acc.quote_data(stock)['ask_price'])
+        if  avail_cash > ask_price:
+            quantity = purchase_quantity(avail_cash, ask_price)
+            # retrieve correct stock information
+            stock_instrument = my_acc.instruments(stock)[0]
+            my_acc.place_buy_order(stock_instrument, quantity, ask_price)
             bought = {}
-            bought['name'] = stock_instrument['name'] #showed up as ${stock} adjust here!
+            bought['name'] = stock_instrument['simple_name'] 
             bought['quantity'] = quantity
-            bought['price'] = curr_bid
+            bought['price'] = ask_price
             purchases.append(bought)
-    
-    my_trader.logout()
 
-    return purchases, account["email"]
+    return purchases, acc['email']
