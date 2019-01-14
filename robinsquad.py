@@ -56,7 +56,7 @@ def get_acc_info(email, password):
     # generate portfolio information - stocks, equity, credentials
     port_stocks = get_port_info(my_acc, instrs_quantity)
     avail_cash = float(my_acc.portfolios()['withdrawable_amount']) + float(my_acc.portfolios()['unwithdrawable_deposits'])
-    
+    print("avail: ", avail_cash)
     # create port dict 
     portfolio = {}
     portfolio['positions'] = []
@@ -124,18 +124,20 @@ def rebalance(file='acc.json'):
     my_acc.login(acc['email'], acc['password'])
 
     purchases = []
-    # purchase as many stocks per priorities
-    for stock in priorities:
-        ask_price = float(my_acc.quote_data(stock)['ask_price'])
+    # purchase as many stock shares per priorities
+    for sticker in priorities:
+        ask_price = float(my_acc.quote_data(sticker)['ask_price'])
         if  avail_cash > ask_price:
             quantity = purchase_quantity(avail_cash, ask_price)
             # retrieve correct stock information
-            stock_instrument = my_acc.instruments(stock)[0]
+            stock_instrument = my_acc.instruments(sticker)[0]
             my_acc.place_buy_order(stock_instrument, quantity, ask_price)
             bought = {}
             bought['name'] = stock_instrument['simple_name'] 
             bought['quantity'] = quantity
             bought['price'] = ask_price
             purchases.append(bought)
+            #update avail cash after stock purchase(s)
+            avail_cash = round(avail_cash - (ask_price*quantity), 2)
 
     return purchases, acc['email']
