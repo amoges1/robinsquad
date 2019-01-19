@@ -7,17 +7,17 @@ import warnings
 from enum import Enum
 
 #External dependencies
-from six.moves.urllib.parse import unquote
-from six.moves.urllib.request import getproxies
+from six.moves.urllib.parse import unquote  # pylint: disable=E0401
+from six.moves.urllib.request import getproxies  # pylint: disable=E0401
 from six.moves import input
 
 import getpass
 import requests
 import six
+import dateutil
 
 #Application-specific imports
 from . import exceptions as RH_exception
-
 
 class Bounds(Enum):
     """Enum for bounds in `historicals` endpoint """
@@ -1243,14 +1243,14 @@ class Robinhood:
         # Start with some parameter checks. I'm paranoid about $.
         if(instrument_URL is None):
             if(symbol is None):
-                raise(valueError('Neither instrument_URL nor symbol were passed to submit_order'))
+                raise(ValueError('Neither instrument_URL nor symbol were passed to submit_order'))
             instrument_URL = self.instruments(symbol)[0]['url']
 
         if(symbol is None):
             symbol = self.session.get(instrument_URL, timeout=15).json()['symbol']
 
         if(side is None):
-            raise(valueError('Order is neither buy nor sell in call to submit_order'))
+            raise(ValueError('Order is neither buy nor sell in call to submit_order'))
 
         if(order_type == None):
             if(price == None):
@@ -1266,41 +1266,41 @@ class Robinhood:
         side = str(side).lower()
 
         if(order_type != 'market') and (order_type != 'limit'):
-            raise(valueError('Invalid order_type in call to submit_order'))
+            raise(ValueError('Invalid order_type in call to submit_order'))
 
         if(order_type == 'limit'):
             if(price is None):
-                raise(valueError('Limit order has no price in call to submit_order'))
+                raise(ValueError('Limit order has no price in call to submit_order'))
             if(price <= 0):
-                raise(valueError('Price must be positive number in call to submit_order'))
+                raise(ValueError('Price must be positive number in call to submit_order'))
 
         if(trigger == 'stop'):
             if(stop_price is None):
-                raise(valueError('Stop order has no stop_price in call to submit_order'))
+                raise(ValueError('Stop order has no stop_price in call to submit_order'))
             if(price <= 0):
-                raise(valueError('Stop_price must be positive number in call to submit_order'))
+                raise(ValueError('Stop_price must be positive number in call to submit_order'))
 
         if(stop_price is not None):
             if(trigger != 'stop'):
-                raise(valueError('Stop price set for non-stop order in call to submit_order'))
+                raise(ValueError('Stop price set for non-stop order in call to submit_order'))
 
         if(price is None):
             if(order_type == 'limit'):
-                raise(valueError('Limit order has no price in call to submit_order'))
+                raise(ValueError('Limit order has no price in call to submit_order'))
 
         if(price is not None):
             if(order_type.lower() == 'market'):
-                raise(valueError('Market order has price limit in call to submit_order'))
+                raise(ValueError('Market order has price limit in call to submit_order'))
 
         price = float(price)
 
         if(quantity is None):
-            raise(valueError('No quantity specified in call to submit_order'))
+            raise(ValueError('No quantity specified in call to submit_order'))
 
         quantity = int(quantity)
 
         if(quantity <= 0):
-            raise(valueError('Quantity must be positive number in call to submit_order'))
+            raise(ValueError('Quantity must be positive number in call to submit_order'))
 
         payload = {}
 
