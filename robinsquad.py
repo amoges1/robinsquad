@@ -4,17 +4,16 @@ import json
 import ast
 
 class Stock:
-    """Stock holds basic information"""
+    '''Stock holds symbol, name, quantity, value'''
     def __init__(self, symbol, name, quantity, value) :
         self.symbol = symbol
         self.name = name
         self.quantity = quantity
         self.total_value = value
         self.percentage = 0.0
-#
-# Retrieve a list of stock objects in relation to portfolio
-#
+
 def get_port_info(my_acc, instrs_quantity):
+    '''Retrieve a list of stock objects from portfolio'''
     port_stocks, port_equity = [], 0
 
     for instr, quantity in instrs_quantity.items():
@@ -32,10 +31,9 @@ def get_port_info(my_acc, instrs_quantity):
         stock.percentage = round( (stock.quantity / port_equity) , 4)
 
     return port_stocks 
-#
-# Retrieve user account information e.g equity, stocks, etc. and upload to json
-#
+
 def get_acc_info(email, password):
+    '''Retrieve user account information e.g equity, stocks, etc. and upload to json'''
     # log into Robinhood account
     my_acc = Robinhood()
     try:
@@ -75,10 +73,8 @@ def get_acc_info(email, password):
     
     return True
 
-#
-# Retrieve priorities for VTI, VXUS, and VCIT purchases by comparing current portfolio
-#
 def compare_ports(positions):
+    '''Retrieve priorities for VTI, VXUS, and VCIT purchases by comparing current portfolio'''
     pprint.pprint('Determine index stock to purchase...')
     priority = {}
 
@@ -100,20 +96,16 @@ def compare_ports(positions):
     # return symbols by highest priority in desc order
     return sorted(priority, key=priority.get, reverse=True)
     
-#
-# Based on available cash, find max purchase amount with current asking price
-#
 def purchase_quantity(avail_cash, ask_price):
+    '''Based on available cash, find max purchase amount with current asking price'''
     quantity, total_cost = 0, 0 
     while avail_cash > total_cost:
         quantity = quantity + 1
         total_cost = quantity * ask_price
     return (quantity - 1)
 
-#
-# Rebalance portfolio by purchasing VIT, VXUS and/or VCIT
-#
 def rebalance(file='acc.json'):
+    '''Rebalance portfolio by purchasing VIT, VXUS and/or VCIT'''
     # read from json file
     with open(file) as f:
         acc = json.load(f)
