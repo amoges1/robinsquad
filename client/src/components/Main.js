@@ -15,6 +15,7 @@ const Main = ({cash, equity}) => {
                   }
             })       
             const data = await res.json()
+            if(data.length === 0) return alert("You're broke. Nothing purchased!")
             setPurchases(data)            
         } catch (err) {
             console.log(err);

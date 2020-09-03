@@ -23,10 +23,10 @@ const Navbar = () => {
         <Fragment>
             <div id="navigation">
                 <nav className="navbar navbar-expand-sm bg-dark navbar-dark fixed-top">
-                    <a className="navbar-brand" href="#">
+                    <a className="navbar-brand" href="/account">
                         <img src={require("../img/logo.png")} alt="logo" style={{width:"2.55rem", borderRadius: ".5rem"}}/>
                     </a>
-                    <a className="navbar-brand">
+                    <a className="navbar-brand" href="/account">
                         <span><strong><span className="badge badge-warning">{localStorage.getItem("email")}</span> </strong> </span>
                     </a>
                     <button className="navbar-toggler" type="button" data-toggle="collapse" data-target="#collapsibleNavbar">
@@ -36,7 +36,7 @@ const Navbar = () => {
                     <div className="collapse navbar-collapse justify-content-end" id="collapsibleNavbar">
                         <ul className="navbar-nav">
                             <li className="nav-item ">
-                                <a className="nav-link" href="#" onClick={handleLogout}>Logout</a>
+                                <a className="nav-link" href="/" onClick={handleLogout}>Logout</a>
                             </li>
                         </ul>
                     </div>

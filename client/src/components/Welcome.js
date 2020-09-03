@@ -38,7 +38,7 @@ const Welcome = () => {
                 headers: {
                     'Access-Control-Allow-Origin':'*'
                   }
-            }) // TEST THIS HERE NEXT! Run flask (API) + react (frontend) 
+            }) 
             const data = await res.json()
             if(data.msg === "Signed in") {
                 localStorage.setItem("email", email)
