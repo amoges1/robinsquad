@@ -1,2 +1,3 @@
 __pycache__
-acc.json
+flask_vars.py
+client/node_modules
