@@ -25,7 +25,7 @@ Getting Started:
     - 35% Vanguard Total International Stock ETF, VXUS
     - 10% Vanguard Intermediate-Term Corporate Bond ETF, VCIT
 
-Therefore, when opting to automate your purchases by clicking "Invest" on the home page, your current portfolio will be compared to this ideal portfolio. Based on your cash, purchases of VTI, VXUS and/or VCIT will occur *instantly.* For caution, line 105 of robinsquad.py of rebalance function is disabled to prevent accidental purchase -- uncomment at your risk. 
+Therefore, when opting to automate your purchases by clicking "Invest" on the home page, your current portfolio will be compared to this ideal portfolio. Based on your cash, purchases of VTI, VXUS and/or VCIT will occur *instantly.* For caution, line 105 of robinsquad.py of rebalance function is commented to prevent accidental initial run -- uncomment at your risk. 
 
 For optimization, sit back, deposit cash biweekly, and let Robinsquad handle everything...
 
